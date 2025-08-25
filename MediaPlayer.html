@@ -1,12 +1,12 @@
 <!DOCTYPE html><html><head>
-      <title>test</title>
+      <title>MediaPlayer</title>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       
       <link rel="stylesheet" href="file:////home/user1/.windsurf/extensions/shd101wyy.markdown-preview-enhanced-0.8.19-universal/crossnote/dependencies/katex/katex.min.css">
       
       
-      
+      <script type="text/javascript" src="file:////home/user1/.windsurf/extensions/shd101wyy.markdown-preview-enhanced-0.8.19-universal/crossnote/dependencies/mermaid/mermaid.min.js" charset="UTF-8"></script>
       
       
       <style>
@@ -24,13 +24,257 @@
     
       <div class="crossnote markdown-preview  ">
       
+<h1>Progetto: Audio Player Protetto con Modalità Pro</h1>
+<h2>Obiettivo</h2>
+<p>Creare un dispositivo dedicato (basato su Raspberry Pi Zero 2 W) in grado di riprodurre file audio cifrati, impedendo la copia non autorizzata e con possibilità di sbloccare una <strong>Modalità Pro</strong> tramite abbonamento a pagamento.</p>
+<hr>
+<h2>Requisiti Funzionali</h2>
+<ol>
+<li>
+<p><strong>Riproduzione Audio</strong></p>
+<ul>
+<li>
+<p>File audio cifrati, decrittati solo in RAM.</p>
+</li>
+<li>
+<p>Nessuna possibilità di copia o accesso diretto ai file.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Controllo Utente</strong></p>
+<ul>
+<li>
+<p>Controllo tramite <strong>Bluetooth</strong> (app mobile) con comandi play/pause/volume.</p>
+</li>
+<li>
+<p><strong>USB Gadget</strong> per manutenzione e accesso SSH solo da sviluppatore.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Modalità Pro (Abbonamento)</strong></p>
+<ul>
+<li>
+<p>Modalità Standard → funzioni base.</p>
+</li>
+<li>
+<p>Modalità Pro → funzioni aggiuntive e contenuti premium.</p>
+</li>
+<li>
+<p>Sblocco tramite <strong>token JWT</strong> generato da server remoto, validato dal dispositivo.</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Gestione Tempo e Licenze</strong></p>
+<ul>
+<li>
+<p><strong>RTC hardware</strong> (es. DS3231) per mantenere data/ora anche senza alimentazione.</p>
+</li>
+<li>
+<p><strong>Aggiornamento periodico dell’orario via Bluetooth</strong> come ridondanza.</p>
+</li>
+<li>
+<p>Validazione della scadenza (<code>exp</code>) inclusa nel token JWT.</p>
+</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>Architettura Tecnica</h2>
+<h3 id="hardware">Hardware </h3>
+<ul>
+<li>
+<p>Raspberry Pi Zero 2 W</p>
+</li>
+<li>
+<p>Modulo RTC (DS3231) con batteria tampone</p>
+</li>
+<li>
+<p>Uscita audio (jack 3.5mm o digitale)</p>
+</li>
+<li>
+<p>PCB e storage resinati per protezione fisica</p>
+</li>
+</ul>
+<h3 id="software">Software </h3>
+<ul>
+<li>
+<p>OS minimale (Raspberry Pi OS Lite o Buildroot)</p>
+</li>
+<li>
+<p>Player custom (Python/C++)</p>
+</li>
+<li>
+<p>File cifrati (AES-256)</p>
+</li>
+<li>
+<p>Server Flask per controllo via BT</p>
+</li>
+<li>
+<p>Validazione JWT tramite chiave pubblica integrata</p>
+</li>
+</ul>
+<h3 id="sicurezza">Sicurezza </h3>
+<ul>
+<li>
+<p>Nessun servizio SSH attivo su Wi-Fi/BT</p>
+</li>
+<li>
+<p>Accesso manutenzione solo via <strong>USB Gadget (Ethernet over USB)</strong> o UART</p>
+</li>
+<li>
+<p>Storage resinato e bloccato fisicamente</p>
+</li>
+</ul>
+<hr>
+<h2>Gestione Licenze</h2>
+<ol>
+<li>
+<p><strong>Server Remoto</strong></p>
+<ul>
+<li>
+<p>Gestione utenti e pagamenti (Stripe/PayPal)</p>
+</li>
+<li>
+<p>Generazione token JWT con scadenza (<code>exp</code>)</p>
+</li>
+<li>
+<p>Invio token al cliente (via app o file)</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Cliente (App Mobile/PC)</strong></p>
+<ul>
+<li>
+<p>Riceve token JWT</p>
+</li>
+<li>
+<p>Trasmette token al device via Bluetooth o USB</p>
+</li>
+<li>
+<p>Trasmette anche data/ora corrente per sincronizzazione</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Device (Raspberry Player)</strong></p>
+<ul>
+<li>
+<p>Verifica validità token con chiave pubblica</p>
+</li>
+<li>
+<p>Confronta <code>exp</code> con orologio RTC</p>
+</li>
+<li>
+<p>Abilita o disabilita modalità Pro</p>
+</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>Flusso d'Uso</h2>
+<ol>
+<li>
+<p>Cliente acquista abbonamento.</p>
+</li>
+<li>
+<p>Server genera token JWT valido (es. 30 giorni).</p>
+</li>
+<li>
+<p>Cliente riceve token e lo invia al dispositivo via BT.</p>
+</li>
+<li>
+<p>Dispositivo valida token, aggiorna RTC se necessario, abilita modalità Pro.</p>
+</li>
+<li>
+<p>Alla scadenza, il token non è più valido → ritorno automatico a modalità Standard.</p>
+</li>
+</ol>
+<hr>
+<h2>Schema Mermaid</h2>
+<div class="mermaid">    flowchart TD
+        subgraph Server[Server Remoto]
+            P[Gestione Pagamenti]
+            U[Gestione Utenti]
+            L[Generazione Licenze JWT con exp]
+            P --&gt; L
+            U --&gt; L
+        end
+    
+        subgraph Client[App Mobile / PC Cliente]
+            T[Token JWT ricevuto]
+            D[Data/Ora Corrente]
+        end
+    
+        subgraph Device[Raspberry Player + RTC]
+            R[RTC Hardware con batteria]
+            V[Chiave pubblica integrata]
+            C[Verifica Token + Scadenza]
+            A[Audio Cifrato]
+            Pm[Player Standard]
+            Pro[Player Pro]
+        end
+    
+        L --&gt;|Invio Token| T
+        T --&gt;|Bluetooth / USB Gadget| C
+        D --&gt;|Bluetooth Sync| R
+        R --&gt;|Orario attuale| C
+        V --&gt; C
+        C --&gt;|Token valido e non scaduto| Pro
+        C --&gt;|Token non valido/scaduto| Pm
+        A --&gt; Pm
+        A --&gt; Pro
+</div><hr>
+<h2>Conclusione</h2>
+<p>Il sistema combina <strong>protezione fisica</strong>, <strong>cripto a livello software</strong>, e <strong>gestione licenze basata su token</strong>.<br>
+L’RTC hardware garantisce affidabilità del controllo scadenze, mentre l’aggiornamento via Bluetooth assicura ridondanza.<br>
+Il risultato è un dispositivo blindato, sicuro e flessibile, adatto a un modello di business basato su abbonamenti.</p>
 
       </div>
       
       
     
     
-    
+    <script type="module">
+// TODO: If ZenUML gets integrated into mermaid in the future,
+//      we can remove the following lines.
+
+
+var MERMAID_CONFIG = ({"startOnLoad":false});
+if (typeof MERMAID_CONFIG !== 'undefined') {
+  MERMAID_CONFIG.startOnLoad = false
+  MERMAID_CONFIG.cloneCssStyles = false
+  MERMAID_CONFIG.theme = "default"
+}
+
+mermaid.initialize(MERMAID_CONFIG || {})
+if (typeof(window['Reveal']) !== 'undefined') {
+  function mermaidRevealHelper(event) {
+    var currentSlide = event.currentSlide
+    var diagrams = currentSlide.querySelectorAll('.mermaid')
+    for (var i = 0; i < diagrams.length; i++) {
+      var diagram = diagrams[i]
+      if (!diagram.hasAttribute('data-processed')) {
+        mermaid.init(null, diagram, ()=> {
+          Reveal.slide(event.indexh, event.indexv)
+        })
+      }
+    }
+  }
+  Reveal.addEventListener('slidetransitionend', mermaidRevealHelper)
+  Reveal.addEventListener('ready', mermaidRevealHelper)
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+} else {
+  await mermaid.run({
+    nodes: document.querySelectorAll('.mermaid')
+  })
+}
+</script>
     
     
     
